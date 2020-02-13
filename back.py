@@ -20,13 +20,14 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from twitter import *
 from time import sleep, time
 from threading import Thread
+from pandas.io.json import json_normalize
 
 import sqlite3
-import os
+import pandas as pd
 import json
 import sys
 
-from os.path import isfile
+from os.path import isfile, getsize
 
 def get_credentials():
     if isfile('credentials'):
@@ -34,6 +35,23 @@ def get_credentials():
             return [line.strip() for line in f.readlines()]
     else:
         return ['', '', '', '', '']
+
+def is_sqlite3(filename):
+
+    if not isfile(filename) or getsize(filename) < 100:
+        return False
+
+    with open(filename, 'rb') as fd:
+        header = fd.read(100)
+
+    return header[:16] == b'SQLite format 3\000'
+
+def get_tables(database):
+    conn = sqlite3.connect(database)
+    cur = conn.cursor()
+    tables = [name[0] for name in cur.execute("select name from sqlite_master where type='table';")]
+    conn.close()
+    return tables
 
 class TextOutputWithSignal(QObject):
     received_text = pyqtSignal(str, name='receivedText')
@@ -46,14 +64,18 @@ class Backend(Ui_MainWindow):
         super().__init__()
     
     def init_stuff(self): # run after ui.setupUi()..
+        self.exporting = False
         self.searching = False
         self.stop_searching = False
         self.counter = 0
+
         self.textEditOutput = TextOutputWithSignal(self.textEditOutput)
         self.searchPushButtonSearch.clicked.connect(self.start_thread)
         self.cancelPushButtonSearch.clicked.connect(self.set_stop)
         self.textEditOutput.received_text.connect(self.append_text)
         self.pushButtonDatabasePathSearch.clicked.connect(self.select_file)
+        self.pushButtonDatabasePathExport.clicked.connect(self.select_file_export)
+        self.exportPushButtonExport.clicked.connect(self.start_exporting_thread)
 
         token, token_secret, consumer_key, consumer_secret, database_path = get_credentials()
         self.lineAccessToken.setText(token)
@@ -76,8 +98,38 @@ class Backend(Ui_MainWindow):
         self.lineSearchTerms.setStyleSheet(gray_style_sheet)
         '''
     
+    def export(self):
+        table = self.comboBoxSelectTable.currentText()
+        print('Exporting table named: ' + table)
+        filter = ['user.screen_name', 'retweeted_status.user.screen_name', 'complete_text']
+        conn = sqlite3.connect(self.lineDatabasePathExport.text())
+        df = pd.DataFrame()
+        i = 0
+
+        while True:
+            temp = pd.read_sql_query('select response from ' + '`{}`'.format(table) + ' limit 10000' + ' offset ' + str(10000 * i), conn)
+            if temp.empty:
+                break
+            temp = json_normalize(temp.response.apply(json.loads))
+            temp['complete_text'] =  temp['retweeted_status.extended_tweet.full_text'].fillna(temp['retweeted_status.text'].fillna(temp['extended_tweet.full_text'].fillna(temp['text'])))
+            temp = temp[filter]
+            df = pd.concat([df, temp], ignore_index=True)
+            print(10000 * i)
+            i += 1
+        
+        df.to_excel(table.replace('[', '').replace(']', '') + str(int(time())) + '.xlsx', index=False)
+        print('Done exporting ' + table)
+        self.exporting = False
+        self.exportPushButtonExport.setText('Export')
+
     def select_file(self):
         self.lineDatabasePathSearch.setText(QFileDialog.getOpenFileName()[0])
+
+    def select_file_export(self):
+        self.lineDatabasePathExport.setText(QFileDialog.getOpenFileName()[0])
+        if is_sqlite3(self.lineDatabasePathExport.text()):
+            self.comboBoxSelectTable.clear()
+            self.comboBoxSelectTable.addItems(['Select table:'] + get_tables(self.lineDatabasePathExport.text()))
 
     def append_text(self, text):
         print("Received signal. Appending.")
@@ -180,6 +232,14 @@ class Backend(Ui_MainWindow):
             Thread(target = self.search).start()
             self.searching = True
             print('Returning from start_thread().')
+    
+    def start_exporting_thread(self):
+        if not self.exporting:
+            self.exportPushButtonExport.setText('Exporting...')
+            print('Starting exporting thread.')
+            Thread(target = self.export).start()
+            self.exporting = True
+            print('Returning from start_exporting_thread().')
 
 if __name__ == "__main__":
     import sys
