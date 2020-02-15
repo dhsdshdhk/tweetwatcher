@@ -53,6 +53,12 @@ def get_tables(database):
     conn.close()
     return tables
 
+class ProgressBarWithSignal(QObject):
+    received_progress = pyqtSignal(int, name='receivedProgress')
+    def __init__(self, progressBarExport):
+        super().__init__()
+        self.progressBarExport = progressBarExport
+
 class TextOutputWithSignal(QObject):
     received_text = pyqtSignal(str, name='receivedText')
     def __init__(self, textEditOutput):
@@ -70,9 +76,11 @@ class Backend(Ui_MainWindow):
         self.counter = 0
 
         self.textEditOutput = TextOutputWithSignal(self.textEditOutput)
+        self.progressBarExport = ProgressBarWithSignal(self.progressBarExport)
         self.searchPushButtonSearch.clicked.connect(self.start_thread)
         self.cancelPushButtonSearch.clicked.connect(self.set_stop)
         self.textEditOutput.received_text.connect(self.append_text)
+        self.progressBarExport.received_progress.connect(self.update_progress_bar)
         self.pushButtonDatabasePathSearch.clicked.connect(self.select_file)
         self.pushButtonDatabasePathExport.clicked.connect(self.select_file_export)
         self.exportPushButtonExport.clicked.connect(self.start_exporting_thread)
@@ -83,26 +91,20 @@ class Backend(Ui_MainWindow):
         self.lineConsumerKey.setText(consumer_key)
         self.lineConsumerSecret.setText(consumer_secret)
         self.lineDatabasePathSearch.setText(database_path)
-        
-        '''
-        gray_style_sheet = QLineEdit[readOnly=\"True\"] {
-              color: #808080;
-              background-color: #F0F0F0;"
-              border: 1px solid #B0B0B0;"
-              border-radius: 2px;}
-        self.lineAccessToken.setStyleSheet(gray_style_sheet)
-        self.lineAccessTokenSecret.setStyleSheet(gray_style_sheet)
-        self.lineConsumerKey.setStyleSheet(gray_style_sheet)
-        self.lineConsumerSecret.setStyleSheet(gray_style_sheet)
-        self.lineDatabasePathSearch.setStyleSheet(gray_style_sheet)
-        self.lineSearchTerms.setStyleSheet(gray_style_sheet)
-        '''
-    
+
+    def update_progress_bar(self, value):
+        print("Received progress bar signal. Updating.")
+        self.progressBarExport.progressBarExport.setProperty('value', value)
+        print("Updated.")
+
     def export(self):
         table = self.comboBoxSelectTable.currentText()
         print('Exporting table named: ' + table)
         filter = ['user.screen_name', 'retweeted_status.user.screen_name', 'complete_text']
         conn = sqlite3.connect(self.lineDatabasePathExport.text())
+        rows = conn.cursor().execute('select count(*) from `{}`'.format(table)).fetchone()[0]
+        rows = 99999999999 if rows == 0 else rows
+        progress = 0
         df = pd.DataFrame()
         i = 0
 
@@ -115,12 +117,17 @@ class Backend(Ui_MainWindow):
             temp = temp[filter]
             df = pd.concat([df, temp], ignore_index=True)
             print(10000 * i)
+            progress = int((10000 * i / rows) * 100)
+            self.progressBarExport.received_progress.emit(progress)
             i += 1
         
+        self.progressBarExport.received_progress.emit(100)
+
         df.to_excel(table.replace('[', '').replace(']', '') + str(int(time())) + '.xlsx', index=False)
         print('Done exporting ' + table)
         self.exporting = False
         self.exportPushButtonExport.setText('Export')
+        conn.close()
 
     def select_file(self):
         self.lineDatabasePathSearch.setText(QFileDialog.getOpenFileName()[0])
@@ -153,13 +160,7 @@ class Backend(Ui_MainWindow):
         self.lineSearchTerms.setReadOnly(True)
 
         now = time()
-        #token = '890399609071312896-LV9nqPsPaj0nDUiZxJLxAQndVlNyzRq'
-        #token_secret = 'A8x38tR8K1otXMH1vWSTb5jgkEonvVeSbrCRj7AiOQz7h'
-        #consumer_key = 'JNDKMfAylkZqwFsRbR0RVf2hO'
-        #consumer_secret = 'vfG7AorVSUor0VJFj7wmxjNHtOHpL3kWTJHkaNREnorzq5qJYc'
-        #terms = self.track.split(',')
-        #conn = sqlite3.connect('C:\\Users\\fuck you\\Desktop\\db.db')
-        
+
         token = self.lineAccessToken.text()
         token_secret = self.lineAccessTokenSecret.text()
         consumer_key = self.lineConsumerKey.text()
@@ -169,7 +170,7 @@ class Backend(Ui_MainWindow):
         
         cur = conn.cursor()
 
-        for t in terms:
+        for t in terms.split(','):
             cur.execute('CREATE TABLE IF NOT EXISTS ' + '`[{}]`'.format(t) + ' (\nid integer PRIMARY KEY,\ntimestamp INTEGER,\nresponse TEXT\n);')
 
         print('Initiating stream...')
@@ -198,17 +199,17 @@ class Backend(Ui_MainWindow):
                     except KeyError:
                         continue
             
-            for t in terms:
+            for t in terms.split(','):
                 if t.lower() in text.lower():
-                    cur.execute('INSERT INTO ' + '`[{}]`'.format(t) + '(timestamp,response)\nVALUES(?,?)', (int(time()), json.dumps(tweet)))
+                    #cur.execute('INSERT INTO ' + '`[{}]`'.format(t) + '(timestamp,response)\nVALUES(?,?)', (int(time()), json.dumps(tweet)))
                     self.counter += 1
                     if not (self.counter % 50):
-                        conn.commit()
+                        #conn.commit() dry run for testing purposes, not storing in database
                         print('Committed at ' + str(int(time())))
 
             if time() - now > 5:
                 print('Sending signal.')
-                self.textEditOutput.received_text.emit(text)
+                self.textEditOutput.received_text.emit('@{}: {}'.format(tweet['user']['screen_name'], text))
                 print('Sent signal.')
                 now = time()
                         
