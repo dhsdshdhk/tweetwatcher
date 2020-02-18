@@ -26,6 +26,7 @@ import sqlite3
 import pandas as pd
 import json
 import sys
+import traceback
 
 from os.path import isfile, getsize
 
@@ -174,58 +175,64 @@ class Backend(Ui_MainWindow):
             cur.execute('CREATE TABLE IF NOT EXISTS ' + '`[{}]`'.format(t) + ' (\nid integer PRIMARY KEY,\ntimestamp INTEGER,\nresponse TEXT\n);')
 
         print('Initiating stream...')
-        
-        twitter_stream = TwitterStream(
-            auth=OAuth(token, token_secret, consumer_key, consumer_secret))
 
-        iterator = twitter_stream.statuses.filter(track=terms, stall_warnings=True)
+        while self.searching:
+            try:        
+                twitter_stream = TwitterStream(
+                    auth=OAuth(token, token_secret, consumer_key, consumer_secret))
 
-        print('Searching for {}'.format(terms))
+                iterator = twitter_stream.statuses.filter(track=terms, stall_warnings=True)
 
-        for tweet in iterator:
-            keys = tweet.keys()
-            
-            if 'retweeted_status' in keys:
-                try:
-                    text = tweet['retweeted_status']['extended_tweet']['full_text']
-                except KeyError:
-                    text = tweet['retweeted_status']['text']
-            else:
-                try:
-                    text = tweet['extended_tweet']['full_text']
-                except KeyError:
-                    try:
-                        text = tweet['text']
-                    except KeyError:
-                        continue
-            
-            for t in terms.split(','):
-                if t.lower() in text.lower():
-                    #cur.execute('INSERT INTO ' + '`[{}]`'.format(t) + '(timestamp,response)\nVALUES(?,?)', (int(time()), json.dumps(tweet)))
-                    self.counter += 1
-                    if not (self.counter % 50):
-                        #conn.commit() dry run for testing purposes, not storing in database
-                        print('Committed at ' + str(int(time())))
+                print('Searching for {}'.format(terms))
 
-            if time() - now > 5:
-                print('Sending signal.')
-                self.textEditOutput.received_text.emit('@{}: {}'.format(tweet['user']['screen_name'], text))
-                print('Sent signal.')
-                now = time()
-                        
-            if self.stop_searching:
-                self.stop_searching = False
-                self.searching = False
-                self.lineAccessToken.setReadOnly(False)
-                self.lineAccessTokenSecret.setReadOnly(False)
-                self.lineConsumerKey.setReadOnly(False)
-                self.lineConsumerSecret.setReadOnly(False)
-                self.lineDatabasePathSearch.setReadOnly(False)
-                self.lineSearchTerms.setReadOnly(False)
+                for tweet in iterator:
+                    keys = tweet.keys()
+                
+                    if 'retweeted_status' in keys:
+                        try:
+                            text = tweet['retweeted_status']['extended_tweet']['full_text']
+                        except KeyError:
+                            text = tweet['retweeted_status']['text']
+                    else:
+                        try:
+                            text = tweet['extended_tweet']['full_text']
+                        except KeyError:
+                            try:
+                                text = tweet['text']
+                            except KeyError:
+                                continue
+                    
+                    for t in terms.split(','):
+                        if t.lower() in text.lower():
+                            #cur.execute('INSERT INTO ' + '`[{}]`'.format(t) + '(timestamp,response)\nVALUES(?,?)', (int(time()), json.dumps(tweet)))
+                            self.counter += 1
+                            if not (self.counter % 50):
+                                #conn.commit() dry run for testing purposes, not storing in database
+                                print('Committed at ' + str(int(time())))
 
-                self.searchPushButtonSearch.setText('Search')
-                print('Stopped searching.')
-                break
+                    if time() - now > 5:
+                        print('Sending signal.')
+                        self.textEditOutput.received_text.emit('@{}: {}'.format(tweet['user']['screen_name'], text))
+                        print('Sent signal.')
+                        now = time()
+                                
+                    if self.stop_searching:
+                        self.stop_searching = False
+                        self.searching = False
+                        self.lineAccessToken.setReadOnly(False)
+                        self.lineAccessTokenSecret.setReadOnly(False)
+                        self.lineConsumerKey.setReadOnly(False)
+                        self.lineConsumerSecret.setReadOnly(False)
+                        self.lineDatabasePathSearch.setReadOnly(False)
+                        self.lineSearchTerms.setReadOnly(False)
+
+                        self.searchPushButtonSearch.setText('Search')
+                        print('Stopped searching.')
+                        break
+            except Exception as e:
+                traceback.print_exc()
+                print(e)
+                sleep(15)
     
     def start_thread(self):
         if not self.searching:

@@ -65,7 +65,7 @@
        </palette>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="tabSearch">
        <property name="sizePolicy">
@@ -240,8 +240,8 @@
        <attribute name="title">
         <string>Export</string>
        </attribute>
-       <layout class="QVBoxLayout" name="verticalLayout_3">
-        <item>
+       <layout class="QGridLayout" name="gridLayout_2">
+        <item row="0" column="0">
          <layout class="QFormLayout" name="formLayoutSearch_2">
           <item row="0" column="0">
            <widget class="QPushButton" name="pushButtonDatabasePathExport">
@@ -263,7 +263,7 @@
           <item row="1" column="1">
            <widget class="QLineEdit" name="lineFieldsExport"/>
           </item>
-          <item row="2" column="0">
+          <item row="2" column="1">
            <widget class="QComboBox" name="comboBoxSelectTable">
             <property name="maximumSize">
              <size>
@@ -278,9 +278,39 @@
             </item>
            </widget>
           </item>
+          <item row="3" column="0">
+           <widget class="QLabel" name="label_2">
+            <property name="text">
+             <string>Format:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="1">
+           <widget class="QComboBox" name="comboBoxSelectFormat">
+            <property name="minimumSize">
+             <size>
+              <width>100</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>100</width>
+              <height>16777215</height>
+             </size>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QLabel" name="label">
+            <property name="text">
+             <string>Table:</string>
+            </property>
+           </widget>
+          </item>
          </layout>
         </item>
-        <item>
+        <item row="1" column="0">
          <layout class="QVBoxLayout" name="verticalLayout">
           <item>
            <widget class="QPushButton" name="exportPushButtonExport">
