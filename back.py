@@ -20,7 +20,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from twitter import *
 from time import sleep, time
 from threading import Thread
-from pandas.io.json import json_normalize
+from pandas import json_normalize
 
 import sqlite3
 import pandas as pd
@@ -101,13 +101,15 @@ class Backend(Ui_MainWindow):
     def export(self):
         table = self.comboBoxSelectTable.currentText()
         print('Exporting table named: ' + table)
-        filter = ['user.screen_name', 'retweeted_status.user.screen_name', 'complete_text']
+        filter = ['created_at', 'user.screen_name', 'retweeted_status.user.screen_name', 'complete_text', 'lang']
         conn = sqlite3.connect(self.lineDatabasePathExport.text())
-        rows = conn.cursor().execute('select count(*) from `{}`'.format(table)).fetchone()[0]
-        rows = 99999999999 if rows == 0 else rows
+        #rows = conn.cursor().execute('select count(*) from `{}`'.format(table)).fetchone()[0]
+        #rows = 99999999999 if rows == 0 else rows
+        rows = 1300000
         progress = 0
         df = pd.DataFrame()
         i = 0
+        pt_only = True # temporarily always True, will add an option in the interface
 
         while True:
             temp = pd.read_sql_query('select response from ' + '`{}`'.format(table) + ' limit 10000' + ' offset ' + str(10000 * i), conn)
@@ -123,8 +125,23 @@ class Backend(Ui_MainWindow):
             i += 1
         
         self.progressBarExport.received_progress.emit(100)
+        
+        if pt_only:
+            df = df[df['lang'] == 'pt']
+            df = df.drop('lang', 1)
 
-        df.to_excel(table.replace('[', '').replace(']', '') + str(int(time())) + '.xlsx', index=False)
+        if(len(df) > 1048000):
+            i = 0
+            while True:
+                _ = df[1048000 * i : 1048000 * (i + 1)]
+                if _.empty:
+                    break
+                else:
+                    _.to_excel(table.replace('[', '').replace(']', '') + " parte" + str(i + 1) + str(int(time())) + '.xlsx', index=False)
+                    i += 1
+        else:
+            df.to_excel(table.replace('[', '').replace(']', '') + str(int(time())) + '.xlsx', index=False)
+        
         print('Done exporting ' + table)
         self.exporting = False
         self.exportPushButtonExport.setText('Export')
@@ -204,10 +221,10 @@ class Backend(Ui_MainWindow):
                     
                     for t in terms.split(','):
                         if t.lower() in text.lower():
-                            #cur.execute('INSERT INTO ' + '`[{}]`'.format(t) + '(timestamp,response)\nVALUES(?,?)', (int(time()), json.dumps(tweet)))
+                            cur.execute('INSERT INTO ' + '`[{}]`'.format(t) + '(timestamp,response)\nVALUES(?,?)', (int(time()), json.dumps(tweet)))
                             self.counter += 1
                             if not (self.counter % 50):
-                                #conn.commit() dry run for testing purposes, not storing in database
+                                conn.commit()
                                 print('Committed at ' + str(int(time())))
 
                     if time() - now > 5:
