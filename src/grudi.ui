@@ -1,0 +1,444 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>816</width>
+    <height>595</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Grudi Twitter Tool</string>
+  </property>
+  <property name="windowIcon">
+   <iconset>
+    <normaloff>grudilogo.png</normaloff>grudilogo.png</iconset>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <widget class="QTabWidget" name="tabWidget">
+    <property name="geometry">
+     <rect>
+      <x>9</x>
+      <y>9</y>
+      <width>801</width>
+      <height>571</height>
+     </rect>
+    </property>
+    <property name="maximumSize">
+     <size>
+      <width>801</width>
+      <height>571</height>
+     </size>
+    </property>
+    <property name="palette">
+     <palette>
+      <active>
+       <colorrole role="Light">
+        <brush brushstyle="SolidPattern">
+         <color alpha="255">
+          <red>255</red>
+          <green>255</green>
+          <blue>255</blue>
+         </color>
+        </brush>
+       </colorrole>
+      </active>
+      <inactive>
+       <colorrole role="Light">
+        <brush brushstyle="SolidPattern">
+         <color alpha="255">
+          <red>255</red>
+          <green>255</green>
+          <blue>255</blue>
+         </color>
+        </brush>
+       </colorrole>
+      </inactive>
+      <disabled>
+       <colorrole role="Light">
+        <brush brushstyle="SolidPattern">
+         <color alpha="255">
+          <red>255</red>
+          <green>255</green>
+          <blue>255</blue>
+         </color>
+        </brush>
+       </colorrole>
+      </disabled>
+     </palette>
+    </property>
+    <property name="currentIndex">
+     <number>0</number>
+    </property>
+    <widget class="QWidget" name="tabSearch">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <attribute name="title">
+      <string>Search</string>
+     </attribute>
+     <layout class="QVBoxLayout" name="verticalLayout_2">
+      <item>
+       <layout class="QFormLayout" name="formLayoutSearch">
+        <item row="0" column="0">
+         <widget class="QLabel" name="labelAccessToken">
+          <property name="text">
+           <string>Access Token:</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="1">
+         <widget class="QLineEdit" name="lineAccessToken">
+          <property name="readOnly">
+           <bool>false</bool>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="0">
+         <widget class="QLabel" name="labelAccessTokenSecret">
+          <property name="text">
+           <string>Access Token Secret:</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="1">
+         <widget class="QLineEdit" name="lineAccessTokenSecret"/>
+        </item>
+        <item row="2" column="0">
+         <widget class="QLabel" name="labelConsumerKey">
+          <property name="text">
+           <string>Consumer Key:</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="1">
+         <widget class="QLineEdit" name="lineConsumerKey"/>
+        </item>
+        <item row="3" column="0">
+         <widget class="QLabel" name="labelConsumerSecret">
+          <property name="text">
+           <string>Consumer Secret:</string>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="1">
+         <widget class="QLineEdit" name="lineConsumerSecret"/>
+        </item>
+        <item row="4" column="0">
+         <widget class="QPushButton" name="pushButtonDatabasePathSearch">
+          <property name="text">
+           <string>SQLite3 Database path:</string>
+          </property>
+         </widget>
+        </item>
+        <item row="4" column="1">
+         <widget class="QLineEdit" name="lineDatabasePathSearch"/>
+        </item>
+        <item row="5" column="0">
+         <widget class="QLabel" name="labelSearchTerms">
+          <property name="text">
+           <string>Search terms, separated by ',':</string>
+          </property>
+         </widget>
+        </item>
+        <item row="5" column="1">
+         <widget class="QLineEdit" name="lineSearchTerms"/>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <widget class="QTextEdit" name="textEditOutput">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+        <property name="readOnly">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <layout class="QFormLayout" name="formLayout">
+        <item row="0" column="0">
+         <widget class="QLabel" name="labelFound">
+          <property name="maximumSize">
+           <size>
+            <width>100</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>Found:</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="1">
+         <widget class="QLineEdit" name="lineEditFound">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>100</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="readOnly">
+           <bool>true</bool>
+          </property>
+          <property name="clearButtonEnabled">
+           <bool>false</bool>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_3">
+        <item>
+         <widget class="QPushButton" name="searchPushButtonSearch">
+          <property name="text">
+           <string>Search</string>
+          </property>
+          <property name="checkable">
+           <bool>false</bool>
+          </property>
+          <property name="checked">
+           <bool>false</bool>
+          </property>
+          <property name="autoDefault">
+           <bool>false</bool>
+          </property>
+          <property name="default">
+           <bool>false</bool>
+          </property>
+          <property name="flat">
+           <bool>false</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="cancelPushButtonSearch">
+          <property name="text">
+           <string>Cancel</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </widget>
+    <widget class="QWidget" name="tabExport">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <attribute name="title">
+      <string>Export</string>
+     </attribute>
+     <layout class="QVBoxLayout" name="verticalLayout">
+      <item>
+       <layout class="QFormLayout" name="formLayoutExport">
+        <item row="0" column="0">
+         <widget class="QPushButton" name="pushButtonDatabasePathExport">
+          <property name="text">
+           <string>SQLite3 Database path:</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="1">
+         <widget class="QLineEdit" name="lineDatabasePathExport"/>
+        </item>
+        <item row="1" column="0">
+         <widget class="QLabel" name="labelFieldsExport">
+          <property name="text">
+           <string>Fields, separated by ',':</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="1">
+         <widget class="QLineEdit" name="lineFieldsExport">
+          <property name="placeholderText">
+           <string>created_at, user.screen_name, retweeted_status.user.screen_name and text are in by default.</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="0">
+         <widget class="QLabel" name="labelLanguagesExport">
+          <property name="text">
+           <string>Languages:</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="1">
+         <layout class="QHBoxLayout" name="horizontalLayout">
+          <item>
+           <widget class="QCheckBox" name="checkBoxPortuguese">
+            <property name="maximumSize">
+             <size>
+              <width>100</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>Portuguese</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="checkBoxEnglish">
+            <property name="maximumSize">
+             <size>
+              <width>100</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>English</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="checkBoxAll">
+            <property name="text">
+             <string>All</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item row="3" column="0">
+         <widget class="QLabel" name="labelTable">
+          <property name="text">
+           <string>Table:</string>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="1">
+         <widget class="QComboBox" name="comboBoxSelectTable">
+          <property name="maximumSize">
+           <size>
+            <width>100</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <item>
+           <property name="text">
+            <string>Select table:</string>
+           </property>
+          </item>
+         </widget>
+        </item>
+        <item row="4" column="0">
+         <widget class="QLabel" name="labelFormat">
+          <property name="text">
+           <string>Format:</string>
+          </property>
+         </widget>
+        </item>
+        <item row="4" column="1">
+         <widget class="QComboBox" name="comboBoxSelectFormat">
+          <property name="minimumSize">
+           <size>
+            <width>100</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>100</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <item>
+           <property name="text">
+            <string>.xlsx</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>.csv</string>
+           </property>
+          </item>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <spacer name="verticalSpacer">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>20</width>
+          <height>40</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_2">
+        <item>
+         <widget class="QPushButton" name="exportPushButtonExport">
+          <property name="text">
+           <string>Export</string>
+          </property>
+          <property name="checkable">
+           <bool>false</bool>
+          </property>
+          <property name="checked">
+           <bool>false</bool>
+          </property>
+          <property name="autoDefault">
+           <bool>false</bool>
+          </property>
+          <property name="default">
+           <bool>false</bool>
+          </property>
+          <property name="flat">
+           <bool>false</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="cancelPushButtonExport">
+          <property name="text">
+           <string>Cancel</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </widget>
+   </widget>
+  </widget>
+  <widget class="QStatusBar" name="statusbar">
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+  </widget>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
