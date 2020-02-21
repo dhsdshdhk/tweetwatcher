@@ -20,7 +20,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from twitter import *
 from time import sleep, time
 from threading import Thread
-from pandas import json_normalize
+from pandas.io.json import json_normalize
 
 import sqlite3
 import pandas as pd
@@ -101,7 +101,7 @@ class Backend(Ui_MainWindow):
     def export(self):
         table = self.comboBoxSelectTable.currentText()
         print('Exporting table named: ' + table)
-        filter = ['created_at', 'user.screen_name', 'retweeted_status.user.screen_name', 'complete_text', 'lang']
+        filter = ['created_at', 'user.screen_name', 'retweeted_status.user.screen_name', 'complete_text', 'lang', 'favorite_count', 'retweet_count']
         conn = sqlite3.connect(self.lineDatabasePathExport.text())
         #rows = conn.cursor().execute('select count(*) from `{}`'.format(table)).fetchone()[0]
         #rows = 99999999999 if rows == 0 else rows
@@ -116,11 +116,15 @@ class Backend(Ui_MainWindow):
             if temp.empty:
                 break
             temp = json_normalize(temp.response.apply(json.loads))
-            temp['complete_text'] =  temp['retweeted_status.extended_tweet.full_text'].fillna(temp['retweeted_status.text'].fillna(temp['extended_tweet.full_text'].fillna(temp['text'])))
+            print('Normalized.')
+            try:
+                temp['complete_text'] =  temp['retweeted_status.extended_tweet.full_text'].fillna(temp['retweeted_status.text'].fillna(temp['extended_tweet.full_text'].fillna(temp['text'])))
+            except KeyError:
+                temp['complete_text'] =  temp['retweeted_status.quoted_status.full_text'].fillna(temp['retweeted_status.full_text'].fillna(temp['quoted_status.full_text'].fillna(temp['full_text'])))
             temp = temp[filter]
             df = pd.concat([df, temp], ignore_index=True)
             print(10000 * i)
-            progress = int((10000 * i / rows) * 100)
+            progress = int((10000 * i / rows) * 100) % 100
             self.progressBarExport.received_progress.emit(progress)
             i += 1
         
