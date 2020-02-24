@@ -31,18 +31,14 @@ from os.path import isfile, getsize
 
 
 def get_complete_text(df):
-    _ = ['retweeted_status.extended_tweet.full_text', 'retweeted_status.text', 'extended_tweet.full_text', 'text',
-         'retweeted_status.quoted_status.full_text', 'retweeted_status.full_text', 'quoted_status.full_text',
-         'full_text']
-    fields = []
-
-    for i in df.columns:
-        if i in _:
-            fields.append(i)
+    fields = [i for i in
+              ['retweeted_status.extended_tweet.full_text', 'retweeted_status.text', 'extended_tweet.full_text', 'text',
+               'retweeted_status.quoted_status.full_text', 'retweeted_status.full_text', 'quoted_status.full_text',
+               'full_text'] if i in df.columns]
 
     temp = df[fields[len(fields) - 1]]
-    for i in range(len(fields) - 1, -1, -1):
-        temp = df[fields[i - 1]].fillna(temp)
+    for i in range(len(fields) - 2, -1, -1):
+        temp = df[fields[i]].fillna(temp)
 
     return temp
 
@@ -103,12 +99,17 @@ class Backend(Ui_MainWindow):
     def init_stuff(self):  # run after ui.setupUi()..
         self.textEditOutput = TextOutputWithSignal(self.textEditOutput)
         self.searchPushButtonSearch.clicked.connect(self.start_thread)
+        self.searchPushButtonSearch.setDisabled(True)
         self.cancelPushButtonSearch.clicked.connect(self.set_stop_searching)
+        self.cancelPushButtonSearch.setDisabled(True)
+
         self.textEditOutput.received_text.connect(self.append_text)
         self.pushButtonDatabasePathSearch.clicked.connect(self.select_file)
         self.pushButtonDatabasePathExport.clicked.connect(self.select_file_export)
         self.cancelPushButtonExport.clicked.connect(self.set_stop_exporting)
+        self.cancelPushButtonExport.setDisabled(True)
         self.exportPushButtonExport.clicked.connect(self.start_exporting_thread)
+        self.exportPushButtonExport.setDisabled(True)
 
         token, token_secret, consumer_key, consumer_secret, database_path = get_credentials()
         self.lineAccessToken.setText(token)
@@ -117,19 +118,51 @@ class Backend(Ui_MainWindow):
         self.lineConsumerSecret.setText(consumer_secret)
         self.lineDatabasePathSearch.setText(database_path)
 
+        self.lineSearchTerms.textChanged.connect(self.enable_disable_buttons)
+        self.lineAccessToken.textChanged.connect(self.enable_disable_buttons)
+        self.lineAccessTokenSecret.textChanged.connect(self.enable_disable_buttons)
+        self.lineConsumerKey.textChanged.connect(self.enable_disable_buttons)
+        self.lineConsumerSecret.textChanged.connect(self.enable_disable_buttons)
+        self.lineDatabasePathSearch.textChanged.connect(self.enable_disable_buttons)
+        self.lineDatabasePathExport.textChanged.connect(self.enable_disable_buttons)
+
+        self.checkBoxAll.toggled.connect(self.lineEditLanguages.setDisabled)
+
+    def enable_disable_buttons(self):
+        if len(self.lineSearchTerms.text()) \
+                and len(self.lineAccessToken.text()) \
+                and len(self.lineAccessTokenSecret.text()) \
+                and len(self.lineConsumerKey.text()) \
+                and len(self.lineConsumerSecret.text()) \
+                and len(self.lineDatabasePathSearch.text()):
+            self.searchPushButtonSearch.setDisabled(False)
+        else:
+            self.searchPushButtonSearch.setDisabled(True)
+
+        if len(self.lineDatabasePathExport.text()) and is_sqlite3(self.lineDatabasePathExport.text()):
+            self.comboBoxSelectTable.clear()
+            self.comboBoxSelectTable.addItems(get_tables(self.lineDatabasePathExport.text()))
+            self.exportPushButtonExport.setDisabled(False)
+        else:
+            self.exportPushButtonExport.setDisabled(True)
+            self.comboBoxSelectTable.clear()
+
     def export(self):
+        self.exportPushButtonExport.setText('Exporting...')
+        self.exportPushButtonExport.setDisabled(True)
+        self.cancelPushButtonExport.setDisabled(False)
+
         table = self.comboBoxSelectTable.currentText()
         file_format = self.comboBoxSelectFormat.currentText()
         print('Exporting table named: ' + table)
         columns = list(dict.fromkeys(
             ['created_at', 'user.screen_name', 'retweeted_status.user.screen_name', 'complete_text', 'lang'] + [
                 _.strip() for _ in self.lineFieldsExport.text().split(',') if _ != '']))
-        print(columns)
+        languages = 'all' if self.checkBoxAll.isChecked() else self.lineEditLanguages.text()
         conn = sqlite3.connect(self.lineDatabasePathExport.text())
 
         df = pd.DataFrame()
         i = 0
-        pt_only = True  # temporarily always True, will add an option in the interface
 
         while True:
             temp = pd.read_sql_query(
@@ -144,8 +177,8 @@ class Backend(Ui_MainWindow):
             i += 1
 
         if not self.stop_exporting and not df.empty:
-            if pt_only:
-                df = df[df['lang'] == 'pt']
+            if languages != 'all':
+                df = df[df['lang'] in languages.split(',')]
                 df = df.drop('lang', 1)
 
             if len(df) > 1048000:
@@ -164,6 +197,8 @@ class Backend(Ui_MainWindow):
 
         self.stop_exporting = False
         self.exporting = False
+        self.exportPushButtonExport.setDisabled(False)
+        self.cancelPushButtonExport.setDisabled(True)
         self.exportPushButtonExport.setText('Export')
         conn.close()
 
@@ -172,9 +207,6 @@ class Backend(Ui_MainWindow):
 
     def select_file_export(self):
         self.lineDatabasePathExport.setText(QFileDialog.getOpenFileName()[0])
-        if is_sqlite3(self.lineDatabasePathExport.text()):
-            self.comboBoxSelectTable.clear()
-            self.comboBoxSelectTable.addItems(['Select table:'] + get_tables(self.lineDatabasePathExport.text()))
 
     def append_text(self, text):
         print("Received signal. Appending.")
@@ -192,6 +224,8 @@ class Backend(Ui_MainWindow):
 
     def search(self):
         self.searchPushButtonSearch.setText('Searching...')
+        self.searchPushButtonSearch.setDisabled(True)
+        self.pushButtonDatabasePathSearch.setDisabled(True)
 
         self.lineAccessToken.setReadOnly(True)
         self.lineAccessTokenSecret.setReadOnly(True)
@@ -199,6 +233,12 @@ class Backend(Ui_MainWindow):
         self.lineConsumerSecret.setReadOnly(True)
         self.lineDatabasePathSearch.setReadOnly(True)
         self.lineSearchTerms.setReadOnly(True)
+        self.lineAccessToken.setDisabled(True)
+        self.lineAccessTokenSecret.setDisabled(True)
+        self.lineConsumerKey.setDisabled(True)
+        self.lineConsumerSecret.setDisabled(True)
+        self.lineDatabasePathSearch.setDisabled(True)
+        self.lineSearchTerms.setDisabled(True)
 
         now = time()
 
@@ -265,7 +305,15 @@ class Backend(Ui_MainWindow):
                         self.lineConsumerSecret.setReadOnly(False)
                         self.lineDatabasePathSearch.setReadOnly(False)
                         self.lineSearchTerms.setReadOnly(False)
+                        self.lineAccessToken.setDisabled(False)
+                        self.lineAccessTokenSecret.setDisabled(False)
+                        self.lineConsumerKey.setDisabled(False)
+                        self.lineConsumerSecret.setDisabled(False)
+                        self.lineDatabasePathSearch.setDisabled(False)
+                        self.lineSearchTerms.setDisabled(False)
 
+                        self.pushButtonDatabasePathSearch.setDisabled(False)
+                        self.searchPushButtonSearch.setDisabled(False)
                         self.searchPushButtonSearch.setText('Search')
                         print('Stopped searching.')
                         break
@@ -283,7 +331,6 @@ class Backend(Ui_MainWindow):
 
     def start_exporting_thread(self):
         if not self.exporting:
-            self.exportPushButtonExport.setText('Exporting...')
             print('Starting exporting thread.')
             Thread(target=self.export).start()
             self.exporting = True
