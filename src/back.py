@@ -13,7 +13,7 @@
 #
 # as instructed in https://github.com/sixohsix/twitter/issues/398
 
-from src.grudi import Ui_MainWindow
+from src.tweetwatcher import Ui_MainWindow
 from PyQt5.QtCore import QObject, pyqtSignal
 from PyQt5.QtWidgets import QFileDialog
 from PyQt5 import QtCore, QtGui, QtWidgets

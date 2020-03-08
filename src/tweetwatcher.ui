@@ -11,11 +11,11 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Grudi Twitter Tool</string>
+   <string>Tweet Watcher</string>
   </property>
   <property name="windowIcon">
    <iconset>
-    <normaloff>grudilogo.png</normaloff>grudilogo.png</iconset>
+    <normaloff>C:/Users/fuck you/Desktop/1582834885184.jpg</normaloff>C:/Users/fuck you/Desktop/1582834885184.jpg</iconset>
   </property>
   <widget class="QWidget" name="centralwidget">
    <property name="sizePolicy">

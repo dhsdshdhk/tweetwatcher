@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'grudi.ui'
+# Form implementation generated from reading ui file '.\tweetwatcher.ui'
 #
 # Created by: PyQt5 UI code generator 5.13.2
 #
@@ -15,7 +15,7 @@ class Ui_MainWindow(object):
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(816, 595)
         icon = QtGui.QIcon()
-        icon.addPixmap(QtGui.QPixmap("grudilogo.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon.addPixmap(QtGui.QPixmap("C:/Users/fuck you/Desktop/1582834885184.jpg"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         MainWindow.setWindowIcon(icon)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
@@ -217,7 +217,7 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", "Grudi Twitter Tool"))
+        MainWindow.setWindowTitle(_translate("MainWindow", "Tweet Watcher"))
         self.labelAccessToken.setText(_translate("MainWindow", "Access Token:"))
         self.labelAccessTokenSecret.setText(_translate("MainWindow", "Access Token Secret:"))
         self.labelConsumerKey.setText(_translate("MainWindow", "Consumer Key:"))
