@@ -98,7 +98,7 @@ class Backend(Ui_MainWindow):
 
     def init_stuff(self):  # run after ui.setupUi()..
         self.textEditOutput = TextOutputWithSignal(self.textEditOutput)
-        self.searchPushButtonSearch.clicked.connect(self.start_thread)
+        self.searchPushButtonSearch.clicked.connect(self.start_searching)
         self.searchPushButtonSearch.setDisabled(True)
         self.cancelPushButtonSearch.clicked.connect(self.set_stop_searching)
         self.cancelPushButtonSearch.setDisabled(True)
@@ -108,7 +108,7 @@ class Backend(Ui_MainWindow):
         self.pushButtonDatabasePathExport.clicked.connect(self.select_file_export)
         self.cancelPushButtonExport.clicked.connect(self.set_stop_exporting)
         self.cancelPushButtonExport.setDisabled(True)
-        self.exportPushButtonExport.clicked.connect(self.start_exporting_thread)
+        self.exportPushButtonExport.clicked.connect(self.start_exporting)
         self.exportPushButtonExport.setDisabled(True)
 
         token, token_secret, consumer_key, consumer_secret, database_path = get_credentials()
@@ -139,7 +139,8 @@ class Backend(Ui_MainWindow):
         else:
             self.searchPushButtonSearch.setDisabled(True)
 
-        if len(self.lineDatabasePathExport.text()) and is_sqlite3(self.lineDatabasePathExport.text()):
+        if len(self.lineDatabasePathExport.text()) and is_sqlite3(self.lineDatabasePathExport.text())\
+                and not self.searching:
             self.comboBoxSelectTable.clear()
             self.comboBoxSelectTable.addItems(get_tables(self.lineDatabasePathExport.text()))
             self.exportPushButtonExport.setDisabled(False)
@@ -151,6 +152,23 @@ class Backend(Ui_MainWindow):
         self.exportPushButtonExport.setText('Exporting...')
         self.exportPushButtonExport.setDisabled(True)
         self.cancelPushButtonExport.setDisabled(False)
+
+        self.lineAccessToken.setDisabled(True)
+        self.lineAccessTokenSecret.setDisabled(True)
+        self.lineConsumerKey.setDisabled(True)
+        self.lineConsumerSecret.setDisabled(True)
+        self.lineDatabasePathSearch.setDisabled(True)
+        self.lineSearchTerms.setDisabled(True)
+
+        self.pushButtonDatabasePathSearch.setDisabled(True)
+        self.searchPushButtonSearch.setDisabled(True)
+
+        self.lineDatabasePathExport.setDisabled(True)
+        self.lineFieldsExport.setDisabled(True)
+        self.checkBoxAll.setDisabled(True)
+        self.comboBoxSelectTable.setDisabled(True)
+        self.comboBoxSelectFormat.setDisabled(True)
+
 
         table = self.comboBoxSelectTable.currentText()
         file_format = self.comboBoxSelectFormat.currentText()
@@ -202,6 +220,16 @@ class Backend(Ui_MainWindow):
         self.exportPushButtonExport.setText('Export')
         conn.close()
 
+        self.lineAccessToken.setDisabled(False)
+        self.lineAccessTokenSecret.setDisabled(False)
+        self.lineConsumerKey.setDisabled(False)
+        self.lineConsumerSecret.setDisabled(False)
+        self.lineDatabasePathSearch.setDisabled(False)
+        self.lineSearchTerms.setDisabled(False)
+
+        self.pushButtonDatabasePathSearch.setDisabled(False)
+        self.searchPushButtonSearch.setDisabled(False)
+
     def select_file(self):
         self.lineDatabasePathSearch.setText(QFileDialog.getOpenFileName()[0])
 
@@ -209,11 +237,8 @@ class Backend(Ui_MainWindow):
         self.lineDatabasePathExport.setText(QFileDialog.getOpenFileName()[0])
 
     def append_text(self, text):
-        print("Received signal. Appending.")
         self.textEditOutput.textEditOutput.append(text)
-        print("Appended. Now moving cursor to the end.")
         self.textEditOutput.textEditOutput.moveCursor(QtGui.QTextCursor.End)
-        print("Moved cursor.")
         self.lineEditFound.setText(str(self.counter))
 
     def set_stop_searching(self):
@@ -225,20 +250,21 @@ class Backend(Ui_MainWindow):
     def search(self):
         self.searchPushButtonSearch.setText('Searching...')
         self.searchPushButtonSearch.setDisabled(True)
+        self.cancelPushButtonSearch.setDisabled(False)
         self.pushButtonDatabasePathSearch.setDisabled(True)
 
-        self.lineAccessToken.setReadOnly(True)
-        self.lineAccessTokenSecret.setReadOnly(True)
-        self.lineConsumerKey.setReadOnly(True)
-        self.lineConsumerSecret.setReadOnly(True)
-        self.lineDatabasePathSearch.setReadOnly(True)
-        self.lineSearchTerms.setReadOnly(True)
         self.lineAccessToken.setDisabled(True)
         self.lineAccessTokenSecret.setDisabled(True)
         self.lineConsumerKey.setDisabled(True)
         self.lineConsumerSecret.setDisabled(True)
         self.lineDatabasePathSearch.setDisabled(True)
         self.lineSearchTerms.setDisabled(True)
+
+        self.lineDatabasePathExport.setDisabled(True)
+        self.lineFieldsExport.setDisabled(True)
+        self.checkBoxAll.setDisabled(True)
+        self.comboBoxSelectTable.setDisabled(True)
+        self.comboBoxSelectFormat.setDisabled(True)
 
         now = time()
 
@@ -299,12 +325,7 @@ class Backend(Ui_MainWindow):
                     if self.stop_searching:
                         self.stop_searching = False
                         self.searching = False
-                        self.lineAccessToken.setReadOnly(False)
-                        self.lineAccessTokenSecret.setReadOnly(False)
-                        self.lineConsumerKey.setReadOnly(False)
-                        self.lineConsumerSecret.setReadOnly(False)
-                        self.lineDatabasePathSearch.setReadOnly(False)
-                        self.lineSearchTerms.setReadOnly(False)
+
                         self.lineAccessToken.setDisabled(False)
                         self.lineAccessTokenSecret.setDisabled(False)
                         self.lineConsumerKey.setDisabled(False)
@@ -315,6 +336,13 @@ class Backend(Ui_MainWindow):
                         self.pushButtonDatabasePathSearch.setDisabled(False)
                         self.searchPushButtonSearch.setDisabled(False)
                         self.searchPushButtonSearch.setText('Search')
+
+                        self.lineDatabasePathExport.setDisabled(False)
+                        self.lineFieldsExport.setDisabled(False)
+                        self.checkBoxAll.setDisabled(False)
+                        self.comboBoxSelectTable.setDisabled(False)
+                        self.comboBoxSelectFormat.setDisabled(False)
+
                         print('Stopped searching.')
                         break
             except Exception as e:
@@ -322,14 +350,14 @@ class Backend(Ui_MainWindow):
                 print(e)
                 sleep(15)
 
-    def start_thread(self):
+    def start_searching(self):
         if not self.searching:
             print('Starting thread.')
             Thread(target=self.search).start()
             self.searching = True
             print('Returning from start_thread().')
 
-    def start_exporting_thread(self):
+    def start_exporting(self):
         if not self.exporting:
             print('Starting exporting thread.')
             Thread(target=self.export).start()
