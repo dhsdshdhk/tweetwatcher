@@ -14,11 +14,7 @@ A simple graphical user interface for searching and storing real time tweets.
 $ python3 -m pip install git+git://github.com/sixohsix/twitter.git#twitter
 $ python3 -m pip install tweetwatcher
 ```
-Add to .local/bin to PATH if it isn't already: 
-```sh
-$ python3 -m pip install git+git://github.com/sixohsix/twitter.git#twitter
-$ python3 -m pip install tweetwatcher
-```
+Add to ~/.local/bin to PATH if it isn't already.
 ***
 ### Usage:
 * Just type tweetwatcher on your terminal emulator to open the app.
