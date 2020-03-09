@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="tweetwatcher", # Replace with your own username
-    version="0.0.1",
+    version="0.0.2",
     author="John Doe",
     author_email="author@example.com",
     description="A simple tweet watcher.",
