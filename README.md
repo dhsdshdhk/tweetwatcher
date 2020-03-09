@@ -1,6 +1,6 @@
 # Tweet Watcher
 
-A simple graphical user interface for searching and storing real time tweets.
+A simple graphical user interface for searching and storing tweets in real time.
 
 ***
 ### Dependencies
@@ -14,10 +14,20 @@ A simple graphical user interface for searching and storing real time tweets.
 $ python3 -m pip install git+git://github.com/sixohsix/twitter.git#twitter
 $ python3 -m pip install tweetwatcher
 ```
-Add to ~/.local/bin to PATH if it isn't already.
+Add to ```~/.local/bin``` to ```PATH``` if it isn't already.
 ***
-### Usage:
-* Just type tweetwatcher on your terminal emulator to open the app.
+### Usage
+You will need a Twitter developer account to get the API tokens. You can create that [here](developer.twitter.com).
+<br>Then just type tweetwatcher on your terminal emulator to open the app.
 ```sh
 $ tweetwatcher
+```
+Once you open the app, you will need to fill the fields with the tokens and keys you got before searching for anything.
+You can also create a ```credentials``` file at your user home (```~/``` or ```C:\Users\username```) like this:
+```text
+<access token>
+<access token secret>
+<consumer key>
+<consumer key secret>
+<path to database to store tweets>
 ```

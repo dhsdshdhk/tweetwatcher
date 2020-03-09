@@ -11,6 +11,7 @@ from twitter import *
 from time import sleep, time
 from threading import Thread
 from pandas import json_normalize
+from pathlib import Path
 
 import sqlite3
 import pandas as pd
@@ -44,8 +45,9 @@ def write_file(df, table, format, part=0):
 
 
 def get_credentials():
-    if isfile('../credentials'):
-        with open('../credentials', 'r') as f:
+    home = str(Path.home())
+    if isfile(home + '/credentials'):
+        with open(home + '/credentials', 'r') as f:
             return [line.strip() for line in f.readlines()]
     else:
         return ['', '', '', '', '']
