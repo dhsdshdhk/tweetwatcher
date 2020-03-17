@@ -6,3 +6,4 @@ dist
 tweetwatcher/__pycache__
 tweetwatcher.egg-info
 credentials
+*.db

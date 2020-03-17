@@ -119,6 +119,22 @@ class Backend(Ui_MainWindow):
         self.lineDatabasePathExport.textChanged.connect(self.enable_disable_buttons)
 
         self.checkBoxAll.toggled.connect(self.lineEditLanguages.setDisabled)
+        self.radioButtonSaveSingle.setChecked(True)
+        self.radioButtonSaveSeparatedly.setDisabled(True)
+
+        self.comboBoxSelectTable.currentIndexChanged.connect(self.set_since)
+        self.dateTimeUntil.setDateTime(QtCore.QDateTime.fromSecsSinceEpoch(int(time())))
+
+    def set_since(self):
+        try:
+            conn = sqlite3.connect(self.lineDatabasePathExport.text())
+            since = pd.read_sql_query(
+                'select timestamp from ' + '`{}`'.format(self.comboBoxSelectTable.currentText()) + 'limit 1',
+                conn).timestamp[0]
+            self.dateTimeSince.setDateTime(QtCore.QDateTime.fromSecsSinceEpoch(since))
+            conn.close()
+        except:
+            print("Couldn't set since date.")
 
     def enable_disable_buttons(self):
         if len(self.lineSearchTerms.text()) \
@@ -126,7 +142,11 @@ class Backend(Ui_MainWindow):
                 and len(self.lineAccessTokenSecret.text()) \
                 and len(self.lineConsumerKey.text()) \
                 and len(self.lineConsumerSecret.text()) \
-                and len(self.lineDatabasePathSearch.text()):
+                and len(self.lineDatabasePathSearch.text()) \
+                and (self.radioButtonSaveSingle.isChecked()
+                     or self.radioButtonSaveSeparatedly.isChecked()
+                     or self.radioButtonDontSave.isChecked()):
+
             self.searchPushButtonSearch.setDisabled(False)
         else:
             self.searchPushButtonSearch.setDisabled(True)
@@ -139,6 +159,11 @@ class Backend(Ui_MainWindow):
         else:
             self.exportPushButtonExport.setDisabled(True)
             self.comboBoxSelectTable.clear()
+
+        if len(self.lineSearchTerms.text().split(',')) <= 1:
+            self.radioButtonSaveSeparatedly.setDisabled(True)
+        else:
+            self.radioButtonSaveSeparatedly.setDisabled(False)
 
     def export(self):
         self.exportPushButtonExport.setText('Exporting...')
@@ -161,6 +186,9 @@ class Backend(Ui_MainWindow):
         self.comboBoxSelectTable.setDisabled(True)
         self.comboBoxSelectFormat.setDisabled(True)
 
+        self.dateTimeSince.setDisabled(True)
+        self.dateTimeUntil.setDisabled(True)
+
         table = self.comboBoxSelectTable.currentText()
         file_format = self.comboBoxSelectFormat.currentText()
         print('Exporting table named: ' + table)
@@ -169,13 +197,16 @@ class Backend(Ui_MainWindow):
                 _.strip() for _ in self.lineFieldsExport.text().split(',') if _ != '']))
         languages = 'all' if self.checkBoxAll.isChecked() else self.lineEditLanguages.text()
         conn = sqlite3.connect(self.lineDatabasePathExport.text())
+        since = int(self.dateTimeSince.dateTime().toTime_t())
+        until = (self.dateTimeUntil.dateTime().toTime_t())
 
         df = pd.DataFrame()
         i = 0
 
         while True:
             temp = pd.read_sql_query(
-                'select response from ' + '`{}`'.format(table) + ' limit 10000' + ' offset ' + str(10000 * i), conn)
+                'select response from ' + '`{}`'.format(table) + ' where timestamp >= {} and timestamp <= {}'.format(
+                    since, until) + ' limit 10000' + ' offset ' + str(10000 * i), conn)
             if temp.empty or self.stop_exporting:
                 break
             temp = json_normalize(temp.response.apply(json.loads))
@@ -220,6 +251,8 @@ class Backend(Ui_MainWindow):
 
         self.pushButtonDatabasePathSearch.setDisabled(False)
         self.searchPushButtonSearch.setDisabled(False)
+        self.dateTimeSince.setDisabled(False)
+        self.dateTimeUntil.setDisabled(False)
 
     def select_file(self):
         self.lineDatabasePathSearch.setText(QFileDialog.getOpenFileName()[0])
@@ -257,6 +290,13 @@ class Backend(Ui_MainWindow):
         self.comboBoxSelectTable.setDisabled(True)
         self.comboBoxSelectFormat.setDisabled(True)
 
+        self.radioButtonSaveSingle.setDisabled(True)
+        self.radioButtonSaveSeparatedly.setDisabled(True)
+        self.radioButtonDontSave.setDisabled(True)
+
+        self.dateTimeSince.setDisabled(True)
+        self.dateTimeUntil.setDisabled(True)
+
         now = time()
 
         token = self.lineAccessToken.text()
@@ -264,11 +304,16 @@ class Backend(Ui_MainWindow):
         consumer_key = self.lineConsumerKey.text()
         consumer_secret = self.lineConsumerSecret.text()
         terms = ','.join([_.strip() for _ in self.lineSearchTerms.text().split(',')])
+        terms_list = terms.split(',')
+        single_table_name = terms_list[0]
+        single_table = self.radioButtonSaveSingle.isChecked()
+        multiple_tables = self.radioButtonSaveSeparatedly.isChecked()
+        dont_save = self.radioButtonDontSave.isChecked()
         conn = sqlite3.connect(self.lineDatabasePathSearch.text())
 
         cur = conn.cursor()
 
-        for t in terms.split(','):
+        for t in terms_list:
             cur.execute('CREATE TABLE IF NOT EXISTS ' + '`[{}]`'.format(
                 t) + ' (\nid integer PRIMARY KEY,\ntimestamp INTEGER,\nresponse TEXT\n);')
 
@@ -281,7 +326,7 @@ class Backend(Ui_MainWindow):
 
                 iterator = twitter_stream.statuses.filter(track=terms, stall_warnings=True)
 
-                print('Searching for {}'.format(terms))
+                print('Searching for {}'.format(terms_list))
 
                 for tweet in iterator:
                     keys = tweet.keys()
@@ -300,14 +345,27 @@ class Backend(Ui_MainWindow):
                             except KeyError:
                                 continue
 
-                    for t in terms.split(','):
-                        if t.lower() in text.lower():
-                            cur.execute('INSERT INTO ' + '`[{}]`'.format(t) + '(timestamp,response)\nVALUES(?,?)',
-                                        (int(time()), json.dumps(tweet)))
-                            self.counter += 1
-                            if not (self.counter % 50):
-                                conn.commit()
-                                print('Committed at ' + str(int(time())))
+                    if single_table:
+                        cur.execute('INSERT INTO ' + '`[{}]`'.format(
+                            single_table_name) + '(timestamp,response)\nVALUES(?,?)',
+                                    (int(time()), json.dumps(tweet)))
+                        self.counter += 1
+
+                    elif multiple_tables:
+                        text_lower = text.lower()
+                        for t in terms_list:
+                            if t.lower() in text_lower:
+                                cur.execute('INSERT INTO ' + '`[{}]`'.format(t) + '(timestamp,response)\nVALUES(?,?)',
+                                            (int(time()), json.dumps(tweet)))
+                                self.counter += 1
+                                break
+
+                    else:
+                        self.counter += 1
+
+                    if not (self.counter % 5000) and not dont_save:
+                        conn.commit()
+                        print('Committed at ' + str(int(time())))
 
                     if time() - now > 5:
                         self.textEditOutput.received_text.emit('@{}: {}'.format(tweet['user']['screen_name'], text))
@@ -334,6 +392,13 @@ class Backend(Ui_MainWindow):
                         self.comboBoxSelectTable.setDisabled(False)
                         self.comboBoxSelectFormat.setDisabled(False)
 
+                        self.radioButtonSaveSingle.setDisabled(False)
+                        self.radioButtonSaveSeparatedly.setDisabled(False)
+                        self.radioButtonDontSave.setDisabled(False)
+
+                        self.dateTimeSince.setDisabled(False)
+                        self.dateTimeUntil.setDisabled(False)
+
                         print('Stopped searching.')
                         break
             except Exception as e:
@@ -344,14 +409,14 @@ class Backend(Ui_MainWindow):
     def start_searching(self):
         if not self.searching:
             print('Starting thread.')
-            Thread(target=self.search).start()
+            Thread(target=self.search, daemon=True).start()
             self.searching = True
             print('Returning from start_thread().')
 
     def start_exporting(self):
         if not self.exporting:
             print('Starting exporting thread.')
-            Thread(target=self.export).start()
+            Thread(target=self.export, daemon=True).start()
             self.exporting = True
             print('Returning from start_exporting_thread().')
 
@@ -366,5 +431,6 @@ def main():
     ui.init_stuff()
     MainWindow.show()
     sys.exit(app.exec_())
+
 
 main()
