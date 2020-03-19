@@ -120,7 +120,7 @@ class Backend(Ui_MainWindow):
 
         self.checkBoxAll.toggled.connect(self.lineEditLanguages.setDisabled)
         self.radioButtonSaveSingle.setChecked(True)
-        self.radioButtonSaveSeparatedly.setDisabled(True)
+        self.radioButtonSaveSeparately.setDisabled(True)
 
         self.comboBoxSelectTable.currentIndexChanged.connect(self.set_since)
         self.dateTimeUntil.setDateTime(QtCore.QDateTime.fromSecsSinceEpoch(int(time())))
@@ -144,7 +144,7 @@ class Backend(Ui_MainWindow):
                 and len(self.lineConsumerSecret.text()) \
                 and len(self.lineDatabasePathSearch.text()) \
                 and (self.radioButtonSaveSingle.isChecked()
-                     or self.radioButtonSaveSeparatedly.isChecked()
+                     or self.radioButtonSaveSeparately.isChecked()
                      or self.radioButtonDontSave.isChecked()):
 
             self.searchPushButtonSearch.setDisabled(False)
@@ -161,9 +161,9 @@ class Backend(Ui_MainWindow):
             self.comboBoxSelectTable.clear()
 
         if len(self.lineSearchTerms.text().split(',')) <= 1:
-            self.radioButtonSaveSeparatedly.setDisabled(True)
+            self.radioButtonSaveSeparately.setDisabled(True)
         else:
-            self.radioButtonSaveSeparatedly.setDisabled(False)
+            self.radioButtonSaveSeparately.setDisabled(False)
 
     def export(self):
         self.exportPushButtonExport.setText('Exporting...')
@@ -291,7 +291,7 @@ class Backend(Ui_MainWindow):
         self.comboBoxSelectFormat.setDisabled(True)
 
         self.radioButtonSaveSingle.setDisabled(True)
-        self.radioButtonSaveSeparatedly.setDisabled(True)
+        self.radioButtonSaveSeparately.setDisabled(True)
         self.radioButtonDontSave.setDisabled(True)
 
         self.dateTimeSince.setDisabled(True)
@@ -307,7 +307,7 @@ class Backend(Ui_MainWindow):
         terms_list = terms.split(',')
         single_table_name = terms_list[0]
         single_table = self.radioButtonSaveSingle.isChecked()
-        multiple_tables = self.radioButtonSaveSeparatedly.isChecked()
+        multiple_tables = self.radioButtonSaveSeparately.isChecked()
         dont_save = self.radioButtonDontSave.isChecked()
         conn = sqlite3.connect(self.lineDatabasePathSearch.text())
 
@@ -363,7 +363,7 @@ class Backend(Ui_MainWindow):
                     else:
                         self.counter += 1
 
-                    if not (self.counter % 5000) and not dont_save:
+                    if not (self.counter % 500) and not dont_save:
                         conn.commit()
                         print('Committed at ' + str(int(time())))
 
@@ -393,7 +393,7 @@ class Backend(Ui_MainWindow):
                         self.comboBoxSelectFormat.setDisabled(False)
 
                         self.radioButtonSaveSingle.setDisabled(False)
-                        self.radioButtonSaveSeparatedly.setDisabled(False)
+                        self.radioButtonSaveSeparately.setDisabled(False)
                         self.radioButtonDontSave.setDisabled(False)
 
                         self.dateTimeSince.setDisabled(False)

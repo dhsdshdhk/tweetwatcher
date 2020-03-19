@@ -105,7 +105,7 @@
        <bool>true</bool>
       </property>
      </widget>
-     <widget class="QWidget" name="">
+     <widget class="QWidget" name="layoutWidget">
       <property name="geometry">
        <rect>
         <x>9</x>
@@ -209,12 +209,12 @@
           </widget>
          </item>
          <item>
-          <widget class="QRadioButton" name="radioButtonSaveSeparatedly">
+          <widget class="QRadioButton" name="radioButtonSaveSeparately">
            <property name="toolTip">
             <string>Ideal option for not so trendy, lower influx topics.</string>
            </property>
            <property name="text">
-            <string>save tweets separatedly</string>
+            <string>save tweets separately</string>
            </property>
           </widget>
          </item>
@@ -232,7 +232,7 @@
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="">
+     <widget class="QWidget" name="layoutWidget">
       <property name="geometry">
        <rect>
         <x>10</x>
@@ -279,7 +279,7 @@
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="">
+     <widget class="QWidget" name="layoutWidget">
       <property name="geometry">
        <rect>
         <x>0</x>
