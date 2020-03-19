@@ -4,8 +4,8 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="tweetwatcher", # Replace with your own username
-    version="0.0.2",
+    name="tweetwatcher",
+    version="0.0.3",
     author="John Doe",
     author_email="author@example.com",
     description="A simple tweet watcher.",
